@@ -36,4 +36,19 @@ if (stops !== 1 || !LINE.endsWith(".")) fail("expected exactly one sentence endi
 const terminators = [...LINE].filter((c) => c === "." || c === "!" || c === "?").length;
 if (terminators !== 1) fail(`expected exactly one sentence terminator, found ${terminators}`);
 if (written !== LINE) fail("the written file does not match the entry line exactly");
+// Count characters only after Unicode normalisation: the same visible text
+// can be encoded as one composed code point or as a base letter plus a
+// combining mark, and a raw code-point count would score those differently.
+// Require the canonical NFC form so the length above is the length a reader
+// (and the gate) actually sees, and reject any non-NFC bytes on disk.
+if (LINE !== LINE.normalize("NFC")) fail("the entry line is not in Unicode NFC form");
+if (written !== written.normalize("NFC")) fail("the written file is not in Unicode NFC form");
+// Whitespace hygiene: the trim check above only rejects an all-whitespace
+// entry, so a stray leading/trailing space or a doubled internal space
+// would still pass while changing the presented line. Reject those too —
+// tabs are already excluded by the single-line rule in spirit, but check
+// them explicitly alongside the spaces.
+if (written !== written.trim()) fail("the entry has leading or trailing whitespace");
+if (written.includes("  ")) fail("the entry contains a double space");
+if (written.includes("\t")) fail("the entry contains a tab character");
 console.log(`wrote ${target} (${chars} characters, gate 1-${MAX_CHARS}: ok)`);
