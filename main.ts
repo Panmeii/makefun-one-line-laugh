@@ -29,4 +29,11 @@ if (written.trim().length === 0) fail("the entry is only white space");
 if (LINE.includes("\n") || LINE.includes("\r")) fail("the line must stay on a single line");
 const stops = [...LINE].filter((c) => c === ".").length;
 if (stops !== 1 || !LINE.endsWith(".")) fail("expected exactly one sentence ending in a full stop");
+// A second sentence could also hide behind an exclamation or question mark,
+// so the one-sentence rule has to count every sentence terminator, and the
+// file on disk must match the intended line byte for byte (no trailing
+// newline sneaking in, no encoding surprise).
+const terminators = [...LINE].filter((c) => c === "." || c === "!" || c === "?").length;
+if (terminators !== 1) fail(`expected exactly one sentence terminator, found ${terminators}`);
+if (written !== LINE) fail("the written file does not match the entry line exactly");
 console.log(`wrote ${target} (${chars} characters, gate 1-${MAX_CHARS}: ok)`);
